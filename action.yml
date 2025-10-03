@@ -1,0 +1,64 @@
+name: 'Validate A2A Agent Card'
+description: 'Validate A2A protocol agent cards with three-dimensional scoring, cryptographic verification, and live endpoint testing'
+author: 'Capiscio'
+
+branding:
+  icon: 'check-circle'
+  color: 'green'
+
+inputs:
+  agent-card:
+    description: 'Path to agent-card.json file or URL to validate'
+    required: false
+    default: './agent-card.json'
+  
+  strict:
+    description: 'Enable strict validation mode for production compliance'
+    required: false
+    default: 'false'
+  
+  test-live:
+    description: 'Test live agent endpoint with real A2A protocol messages'
+    required: false
+    default: 'false'
+  
+  skip-signature:
+    description: 'Skip JWS signature verification (not recommended for production)'
+    required: false
+    default: 'false'
+  
+  timeout:
+    description: 'Request timeout in milliseconds (default: 10000)'
+    required: false
+    default: '10000'
+  
+  fail-on-warnings:
+    description: 'Fail the action if there are validation warnings'
+    required: false
+    default: 'false'
+
+outputs:
+  result:
+    description: 'Validation result: "passed" or "failed"'
+  
+  compliance-score:
+    description: 'Compliance score (0-100)'
+  
+  trust-score:
+    description: 'Trust score (0-100)'
+  
+  availability-score:
+    description: 'Availability score (0-100) or "not-tested" if --test-live not used'
+  
+  production-ready:
+    description: 'Whether agent meets production readiness thresholds: "true" or "false"'
+  
+  error-count:
+    description: 'Number of validation errors'
+  
+  warning-count:
+    description: 'Number of validation warnings'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'

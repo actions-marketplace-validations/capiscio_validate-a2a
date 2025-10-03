@@ -1,0 +1,27 @@
+name: Test Action
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Test with sample agent card
+        id: validate
+        uses: ./
+        with:
+          agent-card: 'https://raw.githubusercontent.com/capiscio/capiscio-cli/main/test-perfect-agent.json'
+      
+      - name: Display outputs
+        run: |
+          echo "Result: ${{ steps.validate.outputs.result }}"
+          echo "Compliance: ${{ steps.validate.outputs.compliance-score }}"
+          echo "Trust: ${{ steps.validate.outputs.trust-score }}"
+          echo "Availability: ${{ steps.validate.outputs.availability-score }}"
+          echo "Production Ready: ${{ steps.validate.outputs.production-ready }}"
+          echo "Errors: ${{ steps.validate.outputs.error-count }}"
+          echo "Warnings: ${{ steps.validate.outputs.warning-count }}"

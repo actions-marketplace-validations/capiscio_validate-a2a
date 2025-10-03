@@ -1,0 +1,33 @@
+{
+  "name": "validate-a2a",
+  "version": "1.0.0",
+  "description": "GitHub Action to validate A2A protocol agent cards with three-dimensional scoring",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/capiscio/validate-a2a.git"
+  },
+  "keywords": [
+    "a2a",
+    "validation",
+    "github-action",
+    "agent-card",
+    "ai-agents"
+  ],
+  "author": "Capiscio Team",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/exec": "^1.1.1",
+    "@actions/github": "^6.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.2",
+    "@vercel/ncc": "^0.38.4",
+    "typescript": "^5.9.3"
+  }
+}
