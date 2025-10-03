@@ -25757,13 +25757,19 @@ async function run() {
             core.info('');
             core.info('📊 Quality Scores:');
             if (result.scoringResult.compliance) {
-                core.info(`  Compliance: ${result.scoringResult.compliance.score}/100 (${result.scoringResult.compliance.rating})`);
+                const compScore = result.scoringResult.compliance.score;
+                const compRating = result.scoringResult.compliance.rating;
+                core.info(`  Compliance: ${compScore}/100 (${compRating})`);
             }
             if (result.scoringResult.trust) {
-                core.info(`  Trust: ${result.scoringResult.trust.score}/100 (${result.scoringResult.trust.rating})`);
+                const trustScore = result.scoringResult.trust.score;
+                const trustRating = result.scoringResult.trust.rating;
+                core.info(`  Trust: ${trustScore}/100 (${trustRating})`);
             }
             if (result.scoringResult.availability) {
-                core.info(`  Availability: ${result.scoringResult.availability.score}/100 (${result.scoringResult.availability.rating})`);
+                const availScore = result.scoringResult.availability.score;
+                const availRating = result.scoringResult.availability.rating;
+                core.info(`  Availability: ${availScore}/100 (${availRating})`);
             }
             core.info('');
             core.info(`🎯 Production Ready: ${result.scoringResult.productionReady ? '✅ YES' : '❌ NO'}`);
