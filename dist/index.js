@@ -25744,30 +25744,30 @@ async function run() {
             return;
         }
         // Set basic outputs
-        core.setOutput('result', result.valid ? 'passed' : 'failed');
+        core.setOutput('result', result.success ? 'passed' : 'failed');
         core.setOutput('error-count', (result.errors?.length || 0).toString());
         core.setOutput('warning-count', (result.warnings?.length || 0).toString());
         // Set scoring outputs (handle undefined gracefully)
         if (result.scoringResult) {
-            core.setOutput('compliance-score', result.scoringResult.compliance?.score?.toString() || '0');
-            core.setOutput('trust-score', result.scoringResult.trust?.score?.toString() || '0');
-            core.setOutput('availability-score', result.scoringResult.availability?.score?.toString() || 'not-tested');
+            core.setOutput('compliance-score', result.scoringResult.compliance?.total?.toString() || '0');
+            core.setOutput('trust-score', result.scoringResult.trust?.total?.toString() || '0');
+            core.setOutput('availability-score', result.scoringResult.availability?.total?.toString() || 'not-tested');
             core.setOutput('production-ready', (result.scoringResult.productionReady || false).toString());
             // Display scores
             core.info('');
             core.info('📊 Quality Scores:');
             if (result.scoringResult.compliance) {
-                const compScore = result.scoringResult.compliance.score;
+                const compScore = result.scoringResult.compliance.total;
                 const compRating = result.scoringResult.compliance.rating;
                 core.info(`  Compliance: ${compScore}/100 (${compRating})`);
             }
             if (result.scoringResult.trust) {
-                const trustScore = result.scoringResult.trust.score;
+                const trustScore = result.scoringResult.trust.total;
                 const trustRating = result.scoringResult.trust.rating;
                 core.info(`  Trust: ${trustScore}/100 (${trustRating})`);
             }
-            if (result.scoringResult.availability) {
-                const availScore = result.scoringResult.availability.score;
+            if (result.scoringResult.availability && result.scoringResult.availability.total !== null) {
+                const availScore = result.scoringResult.availability.total;
                 const availRating = result.scoringResult.availability.rating;
                 core.info(`  Availability: ${availScore}/100 (${availRating})`);
             }
@@ -25798,7 +25798,7 @@ async function run() {
             });
         }
         // Determine if action should fail
-        if (!result.valid) {
+        if (!result.success) {
             const errorCount = result.errors?.length || 0;
             core.setFailed(`Validation failed with ${errorCount} error(s)`);
         }

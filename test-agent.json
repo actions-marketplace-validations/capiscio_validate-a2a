@@ -1,0 +1,21 @@
+{
+  "protocolVersion": "0.3.0",
+  "name": "Test Agent",
+  "description": "A simple test agent",
+  "url": "https://example.com/agent",
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false
+  },
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["text/plain"],
+  "skills": [
+    {
+      "id": "test-skill",
+      "name": "Test Skill",
+      "description": "A test skill",
+      "tags": ["test"]
+    }
+  ]
+}

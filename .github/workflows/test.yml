@@ -14,8 +14,8 @@ jobs:
         id: validate
         uses: ./
         with:
-          agent-card: 'https://raw.githubusercontent.com/capiscio/capiscio-cli/main/test-perfect-agent.json'
-          # Don't use test-live in CI - the test file has fake endpoints
+          agent-card: './test-agent.json'
+          # Use local file to avoid network issues in CI
       
       - name: Display outputs
         run: |
