@@ -28196,6 +28196,140 @@ module.exports = {
 
 /***/ }),
 
+/***/ 4596:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.fetchText = fetchText;
+exports.computeSHA256 = computeSHA256;
+exports.verifyChecksum = verifyChecksum;
+exports.parseChecksums = parseChecksums;
+const crypto = __importStar(__nccwpck_require__(6982));
+const fs = __importStar(__nccwpck_require__(9896));
+const https = __importStar(__nccwpck_require__(5692));
+function fetchText(url) {
+    return new Promise((resolve, reject) => {
+        const request = https.get(url, { timeout: 30000 }, (res) => {
+            // Follow redirects (GitHub releases redirect)
+            if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+                fetchText(res.headers.location).then(resolve, reject);
+                return;
+            }
+            if (res.statusCode && res.statusCode >= 400) {
+                reject(new Error(`HTTP ${res.statusCode}`));
+                return;
+            }
+            let data = '';
+            res.on('data', (chunk) => { data += chunk.toString(); });
+            res.on('end', () => resolve(data));
+            res.on('error', reject);
+        });
+        request.on('error', reject);
+        request.on('timeout', () => { request.destroy(); reject(new Error('Request timed out')); });
+    });
+}
+async function computeSHA256(filePath) {
+    return new Promise((resolve, reject) => {
+        const hash = crypto.createHash('sha256');
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.on('data', (chunk) => hash.update(chunk));
+        fileStream.on('end', () => resolve(hash.digest('hex')));
+        fileStream.on('error', reject);
+    });
+}
+async function verifyChecksum(downloadedFile, binaryName, options) {
+    const checksumsUrl = `https://github.com/capiscio/capiscio-core/releases/download/v${options.version}/checksums.txt`;
+    let expectedHash = null;
+    try {
+        const checksumsText = await fetchText(checksumsUrl);
+        const lines = checksumsText.trim().split('\n');
+        for (const line of lines) {
+            const parts = line.trim().split(/\s+/);
+            if (parts.length === 2 && parts[1] === binaryName) {
+                expectedHash = parts[0] ?? null;
+                break;
+            }
+        }
+    }
+    catch {
+        if (options.skipChecksum) {
+            options.warn('Could not fetch checksums.txt. Skipping integrity verification (CAPISCIO_SKIP_CHECKSUM=true).');
+            return;
+        }
+        fs.rmSync(downloadedFile, { force: true });
+        throw new Error('Checksum verification failed: checksums.txt is not available. ' +
+            'Cannot verify binary integrity. Set CAPISCIO_SKIP_CHECKSUM=true to bypass.');
+    }
+    if (!expectedHash) {
+        if (options.skipChecksum) {
+            options.warn(`Asset ${binaryName} not found in checksums.txt. Skipping verification (CAPISCIO_SKIP_CHECKSUM=true).`);
+            return;
+        }
+        fs.rmSync(downloadedFile, { force: true });
+        throw new Error(`Checksum verification failed: asset ${binaryName} not found in checksums.txt. ` +
+            `Set CAPISCIO_SKIP_CHECKSUM=true to bypass.`);
+    }
+    const actualHash = await computeSHA256(downloadedFile);
+    if (actualHash !== expectedHash) {
+        fs.rmSync(downloadedFile, { force: true });
+        throw new Error(`Binary integrity check failed for ${binaryName}. ` +
+            `Expected SHA-256: ${expectedHash}, got: ${actualHash}. ` +
+            'The downloaded file does not match the published checksum.');
+    }
+    options.info(`\u2705 Checksum verified for ${binaryName}`);
+}
+/**
+ * Parse a checksums.txt string and find the hash for a given asset name.
+ */
+function parseChecksums(text, assetName) {
+    const lines = text.trim().split('\n');
+    for (const line of lines) {
+        const parts = line.trim().split(/\s+/);
+        if (parts.length === 2 && parts[1] === assetName) {
+            return parts[0] ?? null;
+        }
+    }
+    return null;
+}
+
+
+/***/ }),
+
 /***/ 9407:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -28241,7 +28375,9 @@ const tc = __importStar(__nccwpck_require__(3472));
 const os = __importStar(__nccwpck_require__(857));
 const path = __importStar(__nccwpck_require__(6928));
 const fs = __importStar(__nccwpck_require__(9896));
-const CAPISCIO_VERSION = '2.2.0';
+const validation_1 = __nccwpck_require__(4344);
+const checksum_1 = __nccwpck_require__(4596);
+const CAPISCIO_VERSION = core.getInput('capiscio-version') || '2.6.0';
 async function setupCapiscio() {
     // Determine OS and Arch
     const platform = os.platform();
@@ -28267,6 +28403,14 @@ async function setupCapiscio() {
     core.info(`⬇️ Downloading CapiscIO Core v${CAPISCIO_VERSION} from ${downloadUrl}`);
     // Download
     const downloadPath = await tc.downloadTool(downloadUrl);
+    // Verify checksum before making executable
+    const skipChecksum = ['1', 'true', 'yes'].includes((process.env.CAPISCIO_SKIP_CHECKSUM ?? '').toLowerCase());
+    await (0, checksum_1.verifyChecksum)(downloadPath, binaryName, {
+        version: CAPISCIO_VERSION,
+        skipChecksum,
+        warn: (msg) => core.warning(msg),
+        info: (msg) => core.info(msg),
+    });
     // Rename and make executable
     const binPath = path.join(path.dirname(downloadPath), platform === 'win32' ? 'capiscio.exe' : 'capiscio');
     fs.renameSync(downloadPath, binPath);
@@ -28288,18 +28432,13 @@ async function run() {
         // Install capiscio-core
         await setupCapiscio();
         // Build command arguments
-        const args = ['validate', agentCard, '--json'];
-        if (strict)
-            args.push('--strict');
-        if (testLive)
-            args.push('--test-live');
-        if (skipSignature)
-            args.push('--skip-signature');
-        if (timeout) {
-            // Ensure timeout has units (default to ms if just a number)
-            const timeoutVal = /^\d+$/.test(timeout) ? `${timeout}ms` : timeout;
-            args.push('--timeout', timeoutVal);
-        }
+        const args = (0, validation_1.buildValidateArgs)({
+            agentCard,
+            strict,
+            testLive,
+            skipSignature,
+            timeout,
+        });
         // Run validation
         let output = '';
         let errorOutput = '';
@@ -28342,26 +28481,11 @@ async function run() {
         core.setOutput('warning-count', (result.warnings?.length || 0).toString());
         // Set scoring outputs (handle undefined gracefully)
         if (result.scoringResult) {
-            // Normalize scores from different versions
-            const complianceScore = result.scoringResult.compliance?.total ?? result.scoringResult.complianceScore ?? 0;
-            const trustScore = result.scoringResult.trust?.total ?? result.scoringResult.trustScore ?? 0;
-            let availabilityScore = 'not-tested';
-            if (result.scoringResult.availability) {
-                if (result.scoringResult.availability.total !== undefined && result.scoringResult.availability.total !== null) {
-                    availabilityScore = result.scoringResult.availability.total;
-                }
-                else if (result.scoringResult.availability.score !== undefined) {
-                    // Check if tested is false
-                    if (result.scoringResult.availability.tested === false) {
-                        availabilityScore = 'not-tested';
-                    }
-                    else {
-                        availabilityScore = result.scoringResult.availability.score;
-                    }
-                }
-            }
-            // Calculate production ready if missing (simple heuristic: compliance >= 80)
-            const productionReady = result.scoringResult.productionReady ?? (complianceScore >= 80);
+            const scores = (0, validation_1.calculateScores)(result);
+            const complianceScore = scores.complianceScore;
+            const trustScore = scores.trustScore;
+            const availabilityScore = scores.availabilityScore;
+            const productionReady = scores.productionReady;
             core.setOutput('compliance-score', complianceScore.toString());
             core.setOutput('trust-score', trustScore.toString());
             core.setOutput('availability-score', availabilityScore.toString());
@@ -28369,22 +28493,13 @@ async function run() {
             // Display scores
             core.info('');
             core.info('📊 Quality Scores:');
-            const getRating = (score) => {
-                if (score >= 90)
-                    return 'Excellent';
-                if (score >= 80)
-                    return 'Good';
-                if (score >= 70)
-                    return 'Fair';
-                return 'Needs Improvement';
-            };
-            const compRating = result.scoringResult.compliance?.rating ?? getRating(complianceScore);
+            const compRating = result.scoringResult.compliance?.rating ?? (0, validation_1.getRating)(complianceScore);
             core.info(`  Compliance: ${complianceScore}/100 (${compRating})`);
-            const trustRating = result.scoringResult.trust?.rating ?? getRating(trustScore);
+            const trustRating = result.scoringResult.trust?.rating ?? (0, validation_1.getRating)(trustScore);
             core.info(`  Trust: ${trustScore}/100 (${trustRating})`);
             if (availabilityScore !== 'not-tested') {
                 const availScoreNum = Number(availabilityScore);
-                const availRating = result.scoringResult.availability?.rating ?? getRating(availScoreNum);
+                const availRating = result.scoringResult.availability?.rating ?? (0, validation_1.getRating)(availScoreNum);
                 core.info(`  Availability: ${availScoreNum}/100 (${availRating})`);
             }
             else {
@@ -28439,6 +28554,71 @@ async function run() {
     }
 }
 run();
+
+
+/***/ }),
+
+/***/ 4344:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.normalizeTimeout = normalizeTimeout;
+exports.buildValidateArgs = buildValidateArgs;
+exports.calculateScores = calculateScores;
+exports.getRating = getRating;
+function normalizeTimeout(timeout) {
+    if (!timeout)
+        return "";
+    return /^\d+$/.test(timeout) ? `${timeout}ms` : timeout;
+}
+function buildValidateArgs(inputs) {
+    const args = ["validate", inputs.agentCard, "--json"];
+    if (inputs.strict)
+        args.push("--strict");
+    if (inputs.testLive)
+        args.push("--test-live");
+    if (inputs.skipSignature)
+        args.push("--skip-signature");
+    if (inputs.timeout) {
+        args.push("--timeout", normalizeTimeout(inputs.timeout));
+    }
+    return args;
+}
+function calculateScores(result) {
+    const scoringResult = result.scoringResult;
+    const complianceScore = scoringResult?.compliance?.total ?? scoringResult?.complianceScore ?? 0;
+    const trustScore = scoringResult?.trust?.total ?? scoringResult?.trustScore ?? 0;
+    let availabilityScore = "not-tested";
+    if (scoringResult?.availability) {
+        if (scoringResult.availability.total !== undefined &&
+            scoringResult.availability.total !== null) {
+            availabilityScore = String(scoringResult.availability.total);
+        }
+        else if (scoringResult.availability.score !== undefined) {
+            availabilityScore = scoringResult.availability.tested === false
+                ? "not-tested"
+                : String(scoringResult.availability.score);
+        }
+    }
+    const productionReady = scoringResult?.productionReady ?? (complianceScore >= 80);
+    return {
+        complianceScore,
+        trustScore,
+        availabilityScore,
+        productionReady,
+    };
+}
+function getRating(score) {
+    if (score >= 90)
+        return "Excellent";
+    if (score >= 80)
+        return "Good";
+    if (score >= 70)
+        return "Fair";
+    return "Needs Improvement";
+}
 
 
 /***/ }),

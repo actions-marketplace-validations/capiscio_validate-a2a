@@ -1,11 +1,12 @@
 {
   "name": "validate-a2a",
-  "version": "2.4.0",
+  "version": "2.7.0",
   "description": "GitHub Action to validate A2A protocol agent cards with three-dimensional scoring",
   "main": "dist/index.js",
   "scripts": {
     "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt",
-    "test": "echo \"No tests yet\" && exit 0"
+    "build:test": "tsc -p tsconfig.test.json",
+    "test": "npm run build:test && node --test tests/*.test.js"
   },
   "repository": {
     "type": "git",

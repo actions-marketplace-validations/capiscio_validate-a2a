@@ -10,6 +10,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
       
       - name: Test with sample agent card
         id: validate
@@ -17,6 +29,9 @@ jobs:
         with:
           agent-card: './test-agent.json'
           # Use local file to avoid network issues in CI
+        env:
+          # No releases currently include checksums.txt — skip verification in CI
+          CAPISCIO_SKIP_CHECKSUM: 'true'
       
       - name: Display outputs
         run: |

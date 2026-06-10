@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Validate A2A Agent Card
-        uses: capiscio/validate-a2a@v1
+        uses: capiscio/validate-a2a@v2
         with:
           agent-card: './agent-card.json'
 ```
@@ -37,7 +37,7 @@ jobs:
 
 ```yaml
 - name: Validate for Production
-  uses: capiscio/validate-a2a@v1
+  uses: capiscio/validate-a2a@v2
   with:
     agent-card: './agent-card.json'
     strict: true
@@ -49,7 +49,7 @@ jobs:
 ```yaml
 - name: Validate Agent Card
   id: validate
-  uses: capiscio/validate-a2a@v1
+  uses: capiscio/validate-a2a@v2
   with:
     agent-card: './agent-card.json'
 
@@ -65,7 +65,7 @@ jobs:
 
 ```yaml
 - name: Validate Remote Agent
-  uses: capiscio/validate-a2a@v1
+  uses: capiscio/validate-a2a@v2
   with:
     agent-card: 'https://example.com/agent-card.json'
     test-live: true
@@ -75,7 +75,7 @@ jobs:
 
 ```yaml
 - name: Comprehensive Validation
-  uses: capiscio/validate-a2a@v1
+  uses: capiscio/validate-a2a@v2
   with:
     agent-card: './agent-card.json'
     strict: true
@@ -144,7 +144,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Validate Deployed Agent
-        uses: capiscio/validate-a2a@v1
+        uses: capiscio/validate-a2a@v2
         with:
           agent-card: ${{ secrets.DEPLOYED_AGENT_URL }}
           strict: true
@@ -165,7 +165,7 @@ jobs:
       
       - name: Validate Agent Card
         id: validate
-        uses: capiscio/validate-a2a@v1
+        uses: capiscio/validate-a2a@v2
         with:
           agent-card: './agent-card.json'
       
@@ -203,12 +203,24 @@ jobs:
         environment: [dev, staging, prod]
     steps:
       - name: Validate ${{ matrix.environment }}
-        uses: capiscio/validate-a2a@v1
+        uses: capiscio/validate-a2a@v2
         with:
           agent-card: https://api-${{ matrix.environment }}.example.com/agent-card.json
           strict: ${{ matrix.environment == 'prod' }}
           test-live: true
 ```
+
+## Binary Integrity Verification
+
+This action downloads the capiscio-core binary on first run and verifies its SHA-256 checksum
+against the published `checksums.txt` from the GitHub release.
+
+| Environment Variable | Description | Default |
+|---------------------|-------------|---------|
+| `CAPISCIO_SKIP_CHECKSUM` | Skip binary checksum verification (`true`/`false`) | `false` |
+| `CAPISCIO_CORE_VERSION` | Override the core binary version | Action default |
+
+> **Note:** Setting `CAPISCIO_SKIP_CHECKSUM=true` is not recommended for production workflows.
 
 ## License
 
